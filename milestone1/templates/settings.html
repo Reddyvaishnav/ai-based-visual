@@ -1,0 +1,73 @@
+{# 🆕 NEW FILE: did not exist before - added because base.html / register.html link to it #}
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .settings-wrapper { background: var(--bg-wrapper); border-radius: 28px; max-width: 900px; margin: 0 auto; padding: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.06); }
+    .settings-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem 1.8rem; margin-bottom: 1.2rem; box-shadow: var(--shadow); }
+    .settings-card h5 { font-weight: 700; margin-bottom: 1rem; }
+    .theme-option { flex: 1; border: 2px solid var(--border-color); border-radius: 16px; padding: 1rem; text-align: center; cursor: pointer; background: var(--bg-input); color: var(--text-primary); transition: all .2s; }
+    .theme-option:hover { transform: translateY(-3px); }
+    .theme-option.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(102,126,234,.2); }
+    .theme-option i { font-size: 1.8rem; display: block; margin-bottom: .4rem; }
+    .info-row { display: flex; justify-content: space-between; padding: .55rem 0; border-bottom: 1px solid var(--border-color); }
+    .info-row:last-child { border-bottom: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-wrapper">
+    <h3 class="fw-bold mb-4"><i class="fas fa-cog text-primary me-2"></i>Settings</h3>
+
+    <div class="settings-card">
+        <h5><i class="fas fa-palette me-2 text-primary"></i>Appearance</h5>
+        <div class="d-flex gap-3">
+            <div class="theme-option" data-theme-choice="light"><i class="fas fa-sun"></i>Light</div>
+            <div class="theme-option" data-theme-choice="dark"><i class="fas fa-moon"></i>Dark</div>
+        </div>
+        <p class="text-muted small mt-3 mb-0">Saved in this browser and applied on every page.</p>
+    </div>
+
+    <div class="settings-card">
+        <h5><i class="fas fa-user me-2 text-primary"></i>Account</h5>
+        <div class="info-row"><span class="text-muted">Username</span><strong>{{ current_user.username }}</strong></div>
+        <div class="info-row"><span class="text-muted">Email</span><strong>{{ current_user.email }}</strong></div>
+        <div class="info-row"><span class="text-muted">Role</span><strong>{{ 'Administrator' if current_user.is_admin else 'User' }}</strong></div>
+        <div class="info-row"><span class="text-muted">Member since</span><strong>{{ current_user.created_at.strftime('%d %b %Y') if current_user.created_at else '-' }}</strong></div>
+    </div>
+
+    <div class="settings-card">
+        <h5><i class="fas fa-link me-2 text-primary"></i>Quick links</h5>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('user_dashboard') }}" class="btn btn-primary btn-sm rounded-pill px-3"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3"><i class="fas fa-user-cog me-1"></i>Admin</a>
+            {% endif %}
+            <a href="{{ url_for('privacy') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">Privacy</a>
+            <a href="{{ url_for('terms') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">Terms</a>
+            <a href="{{ url_for('contact') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">Contact</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm rounded-pill px-3"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        const options = document.querySelectorAll('.theme-option');
+        function mark(theme) {
+            options.forEach(o => o.classList.toggle('selected', o.dataset.themeChoice === theme));
+            const icon = document.querySelector('#themeToggle i');   // keep navbar button in sync
+            if (icon) icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+        mark(localStorage.getItem('theme') || 'light');
+        options.forEach(o => o.addEventListener('click', function () {
+            const theme = o.dataset.themeChoice;
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            mark(theme);
+        }));
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .sim-wrapper {
+        background: #f7fafc;
+        border-radius: 20px;
+        padding: 1.5rem;
+    }
+    .card-custom {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    .card-header-custom {
+        background: transparent;
+        font-weight: 600;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #edf2f7;
+        font-size: 1rem;
+    }
+    .scenario-btn {
+        border: 2px solid #edf2f7;
+        border-radius: 14px;
+        padding: 1rem;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+        height: 100%;
+        display: block;
+        width: 100%;
+    }
+    .scenario-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    .scenario-btn.active {
+        border-color: #667eea;
+        background: #f0f4ff;
+    }
+    .scenario-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+    .risk-badge-low { background: #c6f6d5; color: #22543d; font-weight: 600; }
+    .risk-badge-medium { background: #feebc8; color: #744210; font-weight: 600; }
+    .risk-badge-high { background: #fed7d7; color: #742a2a; font-weight: 600; }
+    .result-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 18px;
+        padding: 1.5rem;
+    }
+    .btn-primary-custom {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 50px;
+        padding: 0.7rem 2rem;
+        font-weight: 600;
+        color: white;
+        transition: all 0.2s;
+    }
+    .btn-primary-custom:hover {
+        transform: scale(1.02);
+        color: white;
+    }
+    .baseline-pill {
+        background: white;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sim-wrapper">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-0"><i class="fas fa-robot text-primary me-2"></i>Future Decision Simulation</h3>
+            <p class="text-muted small mb-0">Project how daily habits, financial decisions, and study routines impact your Digital Twin.</p>
+        </div>
+        {% if history %}
+        <form method="POST" action="{{ url_for('clear_simulation_history') }}" onsubmit="return confirm('Clear all simulation history?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="fas fa-trash-alt me-1"></i> Clear History
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Current Baselines -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="baseline-pill d-flex align-items-center justify-content-between">
+                <div>
+                    <small class="text-muted text-uppercase fw-bold">Current Savings</small>
+                    <h4 class="mb-0 fw-bold text-primary">₹{{ current_values.savings|round(0)|int }}</h4>
+                </div>
+                <i class="fas fa-wallet fa-2x text-muted opacity-50"></i>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="baseline-pill d-flex align-items-center justify-content-between">
+                <div>
+                    <small class="text-muted text-uppercase fw-bold">Predicted GPA</small>
+                    <h4 class="mb-0 fw-bold text-success">{{ current_values.gpa }}/4.0</h4>
+                </div>
+                <i class="fas fa-graduation-cap fa-2x text-muted opacity-50"></i>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="baseline-pill d-flex align-items-center justify-content-between">
+                <div>
+                    <small class="text-muted text-uppercase fw-bold">Total Fitness</small>
+                    <h4 class="mb-0 fw-bold text-danger">{{ current_values.fitness }} min</h4>
+                </div>
+                <i class="fas fa-heartbeat fa-2x text-muted opacity-50"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulation Form & Outcome -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card card-custom h-100">
+                <div class="card-header-custom">
+                    <i class="fas fa-sliders-h text-primary me-2"></i>Configure Scenario
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('user_simulation') }}" id="simForm">
+                        <label class="form-label fw-bold small">Choose a Scenario:</label>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="scenario-btn active" id="btn-save">
+                                    <input type="radio" name="scenario" value="save" checked class="d-none">
+                                    <div class="scenario-icon bg-success-subtle text-success"><i class="fas fa-piggy-bank"></i></div>
+                                    <div class="fw-bold">Save More</div>
+                                    <small class="text-muted">Monthly extra savings</small>
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <label class="scenario-btn" id="btn-invest">
+                                    <input type="radio" name="scenario" value="invest" class="d-none">
+                                    <div class="scenario-icon bg-primary-subtle text-primary"><i class="fas fa-chart-line"></i></div>
+                                    <div class="fw-bold">Invest Monthly</div>
+                                    <small class="text-muted">Expected 10% returns</small>
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <label class="scenario-btn" id="btn-spend">
+                                    <input type="radio" name="scenario" value="spend" class="d-none">
+                                    <div class="scenario-icon bg-danger-subtle text-danger"><i class="fas fa-shopping-cart"></i></div>
+                                    <div class="fw-bold">Spend More</div>
+                                    <small class="text-muted">Increased expenses</small>
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <label class="scenario-btn" id="btn-study_more">
+                                    <input type="radio" name="scenario" value="study_more" class="d-none">
+                                    <div class="scenario-icon bg-info-subtle text-info"><i class="fas fa-book"></i></div>
+                                    <div class="fw-bold">Study More</div>
+                                    <small class="text-muted">Hours per week</small>
+                                </label>
+                            </div>
+                            <div class="col-12">
+                                <label class="scenario-btn" id="btn-exercise">
+                                    <input type="radio" name="scenario" value="exercise" class="d-none">
+                                    <div class="scenario-icon bg-warning-subtle text-warning"><i class="fas fa-running"></i></div>
+                                    <div class="fw-bold">Daily Exercise</div>
+                                    <small class="text-muted">Minutes per day</small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small" id="amountLabel">Extra Monthly Amount (₹):</label>
+                            <input type="number" step="any" min="1" name="amount" id="amountInput" class="form-control" value="5000" required>
+                            <small class="text-muted" id="amountHelp">Enter the amount or quantity to simulate.</small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary-custom w-100">
+                            <i class="fas fa-play me-2"></i>Run Simulation
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Simulation Result -->
+        <div class="col-lg-6">
+            {% if result %}
+            <div class="result-card h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge risk-badge-{{ result.risk|lower }} px-3 py-2 rounded-pill">
+                            {{ result.risk }} Risk
+                        </span>
+                        <small class="opacity-75">Simulated Just Now</small>
+                    </div>
+                    <h4 class="fw-bold mb-2">{{ result.desc }}</h4>
+                    <p class="fs-5 mb-4">{{ result.impact }}</p>
+                    
+                    <div class="bg-white bg-opacity-10 p-3 rounded-3 mb-3">
+                        <small class="text-uppercase fw-bold opacity-75 d-block mb-1">Recommendation</small>
+                        <div class="fw-semibold">{{ result.rec }}</div>
+                    </div>
+                </div>
+
+                <div class="border-top border-white border-opacity-25 pt-3 mt-3">
+                    <div class="row text-center">
+                        <div class="col-6 border-end border-white border-opacity-25">
+                            <small class="opacity-75 text-uppercase d-block">Current Baseline</small>
+                            <span class="fs-5 fw-bold">{{ result.current|round(1) }}</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="opacity-75 text-uppercase d-block">Projected Value</small>
+                            <span class="fs-5 fw-bold">{{ result.projected|round(1) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card card-custom h-100 d-flex align-items-center justify-content-center text-center p-4">
+                <div class="text-muted py-5">
+                    <i class="fas fa-chart-pie fa-4x text-primary opacity-25 mb-3"></i>
+                    <h5>No simulation run yet</h5>
+                    <p class="small text-muted mb-0">Select a scenario on the left and click "Run Simulation" to see projected outcomes.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- History Table -->
+    {% if history %}
+    <div class="card card-custom">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-history text-primary me-2"></i>Past Simulation History</span>
+            <span class="badge bg-light text-dark">{{ history|length }} entries</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Scenario</th>
+                            <th>Action / Input</th>
+                            <th>Projected Impact</th>
+                            <th class="text-center">Risk</th>
+                            <th>Recommendation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in history %}
+                        <tr>
+                            <td class="small text-muted">{{ h.timestamp.strftime('%d %b %Y, %I:%M %p') if h.timestamp else '-' }}</td>
+                            <td><span class="badge bg-light text-dark text-uppercase">{{ h.scenario }}</span></td>
+                            <td class="fw-semibold">{{ h.result_desc }}</td>
+                            <td>{{ h.result_impact }}</td>
+                            <td class="text-center">
+                                <span class="badge risk-badge-{{ h.result_risk|lower }} px-2 py-1 rounded-pill small">
+                                    {{ h.result_risk }}
+                                </span>
+                            </td>
+                            <td class="small">{{ h.result_rec }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const labels = {
+        'save': 'Extra Monthly Savings (₹):',
+        'invest': 'Monthly Investment (₹):',
+        'spend': 'Additional Monthly Expense (₹):',
+        'study_more': 'Extra Weekly Study Hours:',
+        'exercise': 'Daily Exercise Duration (minutes):'
+    };
+    const defaultVals = {
+        'save': 5000,
+        'invest': 3000,
+        'spend': 2000,
+        'study_more': 5,
+        'exercise': 30
+    };
+
+    document.querySelectorAll('.scenario-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            const scenario = this.querySelector('input').value;
+            document.getElementById('amountLabel').textContent = labels[scenario] || 'Amount / Value:';
+            document.getElementById('amountInput').value = defaultVals[scenario] || 100;
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .fitness-wrapper {
+        background: #f7fafc;
+        border-radius: 20px;
+        padding: 1rem;
+    }
+    .metric-card {
+        border-radius: 16px;
+        padding: 1rem 1.2rem;
+        color: white;
+        transition: transform 0.2s;
+        height: 100%;
+    }
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    }
+    .metric-card h5 {
+        font-weight: 400;
+        opacity: 0.9;
+        font-size: 0.85rem;
+        margin-bottom: 0.2rem;
+    }
+    .metric-card h2 {
+        font-weight: 700;
+        margin: 0.1rem 0;
+        font-size: 1.8rem;
+    }
+    .metric-card small {
+        opacity: 0.8;
+        font-size: 0.75rem;
+    }
+    .card-custom {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    .card-header-custom {
+        background: transparent;
+        font-weight: 600;
+        padding: 0.8rem 1.2rem;
+        border-bottom: 1px solid #edf2f7;
+        font-size: 0.95rem;
+    }
+    .stat-icon {
+        font-size: 1.8rem;
+        opacity: 0.7;
+    }
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 1.5px solid #e2e8f0;
+        transition: border-color 0.2s;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+    }
+    .btn-primary-custom {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 50px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        color: white;
+        transition: all 0.2s;
+        width: 100%;
+    }
+    .btn-primary-custom:hover {
+        transform: scale(1.02);
+        box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+        color: white;
+    }
+    .chart-container {
+        background: white;
+        border-radius: 14px;
+        padding: 0.8rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        height: 100%;
+    }
+    .chart-container canvas {
+        max-height: 180px;
+    }
+    .table-custom th {
+        font-weight: 600;
+        color: #4a5568;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border-bottom: 2px solid #edf2f7;
+    }
+    .table-custom td {
+        font-size: 0.85rem;
+        vertical-align: middle;
+    }
+    .log-scroll {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .log-scroll::-webkit-scrollbar {
+        width: 4px;
+    }
+    .log-scroll::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 10px;
+    }
+    .action-btn {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    .progress-bar-custom {
+        height: 10px;
+        border-radius: 10px;
+        background: #edf2f7;
+        overflow: hidden;
+        margin: 0.5rem 0;
+    }
+    .progress-bar-custom .fill {
+        height: 100%;
+        border-radius: 10px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transition: width 0.6s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fitness-wrapper">
+    <!-- Page Title -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="fw-bold mb-0"><i class="fas fa-running text-primary me-2"></i>Fitness & Activity</h3>
+        <span class="badge bg-light text-dark">Last updated: {{ datetime.now().strftime('%d %b, %I:%M %p') }}</span>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5>Total Active Time</h5>
+                        <h2>{{ total_min }} <small style="font-size:1rem;">min</small></h2>
+                        <small>{{ (total_min / 60)|round(1) }} hours all time</small>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-stopwatch"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5>Calories Burned</h5>
+                        <h2>{{ total_cal }} <small style="font-size:1rem;">kcal</small></h2>
+                        <small>Total burned</small>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-burn"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a202c;">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5>Active Streak</h5>
+                        <h2>{{ streak }} days</h2>
+                        <small>≥10 min/day</small>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-fire" style="color: #e53e3e;"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5>Weekly Goal</h5>
+                        <h2>{{ weekly_min }} / 150 <small style="font-size:1rem;">min</small></h2>
+                        <small>{{ week_progress }}% completed</small>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-bullseye"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row g-3">
+        <!-- Left: Log Form & Goal Progress -->
+        <div class="col-lg-4">
+            <!-- Add Activity Card -->
+            <div class="card card-custom mb-3">
+                <div class="card-header-custom">
+                    <i class="fas fa-plus-circle text-primary me-1"></i> Log Activity
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('user_fitness') }}">
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">Date</label>
+                            <input type="date" name="date" class="form-control" value="{{ datetime.now().strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">Activity</label>
+                            <select name="activity" class="form-select" required>
+                                <option value="Running">Running</option>
+                                <option value="Cycling">Cycling</option>
+                                <option value="Gym Workout">Gym Workout</option>
+                                <option value="Yoga">Yoga</option>
+                                <option value="Walking">Walking</option>
+                                <option value="Swimming">Swimming</option>
+                                <option value="HIIT">HIIT</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">Duration (minutes)</label>
+                            <input type="number" name="duration" min="1" class="form-control" placeholder="e.g., 30" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Calories Burned (kcal)</label>
+                            <input type="number" name="calories" min="0" class="form-control" placeholder="e.g., 200" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary-custom">
+                            <i class="fas fa-save me-1"></i> Log Activity
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Weekly Progress Card -->
+            <div class="card card-custom">
+                <div class="card-header-custom">
+                    <i class="fas fa-medal text-warning me-1"></i> Weekly Goal Tracker
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-end mb-1">
+                        <div>
+                            <span class="fs-4 fw-bold" style="color: #667eea;">{{ weekly_min }}</span>
+                            <span class="text-muted">/ 150 min</span>
+                        </div>
+                        <span class="badge bg-{{ 'success' if week_progress >= 100 else 'primary' if week_progress >= 50 else 'warning' }}">
+                            {{ week_progress }}%
+                        </span>
+                    </div>
+                    <div class="progress-bar-custom">
+                        <div class="fill" style="width: {{ week_progress }}%;"></div>
+                    </div>
+                    <p class="small text-muted mt-2 mb-0">
+                        Target based on WHO health guidelines of 150 minutes of moderate activity weekly.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Charts & Table -->
+        <div class="col-lg-8">
+            <!-- Charts Row -->
+            <div class="row g-3">
+                <div class="col-md-7">
+                    <div class="chart-container">
+                        <h6 class="fw-bold mb-1" style="font-size: 0.85rem;"><i class="fas fa-chart-line text-primary me-1"></i> Daily Activity (Last 14 Days)</h6>
+                        <canvas id="fitnessTrendChart" height="150"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="chart-container">
+                        <h6 class="fw-bold mb-1" style="font-size: 0.85rem;"><i class="fas fa-chart-pie text-success me-1"></i> Activity Breakdown</h6>
+                        <canvas id="activityPieChart" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity Table -->
+            <div class="card card-custom mt-3">
+                <div class="card-header-custom d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-list-ul text-primary me-1"></i> Recent Activity Logs</span>
+                    <span class="badge bg-light text-dark">{{ logs|length }} entries</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="log-scroll">
+                        <table class="table table-custom table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Activity</th>
+                                    <th class="text-end">Duration</th>
+                                    <th class="text-end">Calories</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                <tr>
+                                    <td>{{ log.date.strftime('%d %b %Y') if log.date else '-' }}</td>
+                                    <td><span class="badge bg-light text-dark">{{ log.activity }}</span></td>
+                                    <td class="text-end fw-semibold">{{ log.duration_min }} min</td>
+                                    <td class="text-end text-danger">{{ log.calories_burned }} kcal</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary action-btn" data-bs-toggle="modal" data-bs-target="#editModal{{ log.id }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <form method="POST" action="{{ url_for('delete_fitness', log_id=log.id) }}" style="display:inline;" onsubmit="return confirm('Delete this log?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger action-btn">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+
+                                <!-- Edit Modal -->
+                                <div class="modal fade" id="editModal{{ log.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Edit Activity Log</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form method="POST" action="{{ url_for('edit_fitness', log_id=log.id) }}">
+                                                <div class="modal-body">
+                                                    <div class="mb-2">
+                                                        <label class="form-label small fw-bold">Date</label>
+                                                        <input type="date" name="date" class="form-control" value="{{ log.date.strftime('%Y-%m-%d') }}" required>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <label class="form-label small fw-bold">Activity</label>
+                                                        <input type="text" name="activity" class="form-control" value="{{ log.activity }}" required>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <label class="form-label small fw-bold">Duration (min)</label>
+                                                        <input type="number" name="duration" class="form-control" value="{{ log.duration_min }}" required>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <label class="form-label small fw-bold">Calories (kcal)</label>
+                                                        <input type="number" name="calories" class="form-control" value="{{ log.calories_burned }}" required>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">No activity logged yet. Add your first workout above!</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Daily Trend Chart
+    const trendCtx = document.getElementById('fitnessTrendChart').getContext('2d');
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: {{ dates|tojson }},
+            datasets: [{
+                label: 'Active Minutes',
+                data: {{ daily_data|tojson }},
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.15)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: '#667eea',
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Activity Pie Chart
+    const pieCtx = document.getElementById('activityPieChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ activities|tojson }},
+            datasets: [{
+                data: {{ activity_minutes|tojson }},
+                backgroundColor: [
+                    '#667eea', '#43e97b', '#f093fb', '#4facfe',
+                    '#fa709a', '#fee140', '#764ba2', '#38f9d7'
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { boxWidth: 10, font: { size: 10 } }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+</script>
+{% endblock %}

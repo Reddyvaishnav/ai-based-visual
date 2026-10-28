@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .detail-wrapper {
+        background: #f7fafc;
+        border-radius: 20px;
+        padding: 1.5rem;
+    }
+    .metric-card {
+        border-radius: 16px;
+        padding: 1rem 1.2rem;
+        color: white;
+        height: 100%;
+    }
+    .card-custom {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    .card-header-custom {
+        background: transparent;
+        font-weight: 600;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #edf2f7;
+    }
+    .chart-container {
+        background: white;
+        border-radius: 14px;
+        padding: 0.8rem;
+        height: 100%;
+    }
+    .chart-container canvas {
+        max-height: 180px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-wrapper">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-0">
+                <i class="fas fa-id-card text-primary me-2"></i>{{ user.username }}'s Digital Twin
+            </h3>
+            <p class="text-muted small mb-0">{{ user.email }} · {{ user.occupation }} (Age {{ user.age }})</p>
+        </div>
+        <a href="{{ url_for('admin_users') }}" class="btn btn-outline-secondary rounded-pill px-3">
+            <i class="fas fa-arrow-left me-1"></i> All Users
+        </a>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <h5>Net Savings</h5>
+                <h2>₹{{ metrics.net|round(0)|int }}</h2>
+                <small>Savings: ₹{{ user.savings|round(0)|int }}</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a202c;">
+                <h5>Predicted GPA</h5>
+                <h2>{{ gpa.gpa }} / 4.0</h2>
+                <small>{{ total_study_logs }} Study Logs</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                <h5>Total Fitness</h5>
+                <h2>{{ total_fitness }} min</h2>
+                <small>{{ total_fitness_logs }} Workouts Logged</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                <h5>Goals Progress</h5>
+                <h2>{{ achieved_goals }} / {{ total_goals }}</h2>
+                <small>Achieved Goals</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card card-custom h-100">
+                <div class="card-header-custom">
+                    <i class="fas fa-chart-line text-primary me-2"></i>Income vs Expenses
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="financeChart" height="180"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card card-custom h-100">
+                <div class="card-header-custom">
+                    <i class="fas fa-book-reader text-success me-2"></i>Study Trend (Last 14 Days)
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="studyChart" height="180"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Data Logs -->
+    <div class="row g-4">
+        <!-- Recent Transactions -->
+        <div class="col-md-4">
+            <div class="card card-custom h-100">
+                <div class="card-header-custom">
+                    <i class="fas fa-exchange-alt text-primary me-2"></i>Transactions
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for tx in recent_transactions %}
+                        <li class="list-group-item px-3 py-2 small">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ tx.category }}</strong>
+                                <span class="badge bg-{{ 'success' if tx.type == 'income' else 'danger' }}">₹{{ tx.amount }}</span>
+                            </div>
+                            <span class="text-muted">{{ tx.date.strftime('%d %b') if tx.date else '-' }}</span>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-center py-3 text-muted small">No transactions</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Study -->
+        <div class="col-md-4">
+            <div class="card card-custom h-100">
+                <div class="card-header-custom">
+                    <i class="fas fa-book text-success me-2"></i>Study Sessions
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for st in recent_study %}
+                        <li class="list-group-item px-3 py-2 small">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ st.subject }}</strong>
+                                <span class="badge bg-info text-dark">{{ st.hours }} hrs</span>
+                            </div>
+                            <span class="text-muted">Productivity: {{ st.productivity_score }}%</span>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-center py-3 text-muted small">No study logs</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Fitness -->
+        <div class="col-md-4">
+            <div class="card card-custom h-100">
+                <div class="card-header-custom">
+                    <i class="fas fa-running text-danger me-2"></i>Fitness Activities
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for ft in recent_fitness %}
+                        <li class="list-group-item px-3 py-2 small">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ ft.activity }}</strong>
+                                <span class="badge bg-warning text-dark">{{ ft.duration_min }} min</span>
+                            </div>
+                            <span class="text-muted">{{ ft.calories_burned }} kcal</span>
+                        </li>
+                        {% else %}
+                        <li class="list-group-item text-center py-3 text-muted small">No fitness logs</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Finance Chart
+    const finCtx = document.getElementById('financeChart').getContext('2d');
+    new Chart(finCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ months|tojson }},
+            datasets: [
+                { label: 'Income', data: {{ income_data|tojson }}, backgroundColor: '#48bb78' },
+                { label: 'Expenses', data: {{ expense_data|tojson }}, backgroundColor: '#fc8181' }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // Study Chart
+    const stdCtx = document.getElementById('studyChart').getContext('2d');
+    new Chart(stdCtx, {
+        type: 'line',
+        data: {
+            labels: {{ study_days|tojson }},
+            datasets: [{
+                label: 'Study Hours',
+                data: {{ study_hours|tojson }},
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.15)',
+                fill: true
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+</script>
+{% endblock %}

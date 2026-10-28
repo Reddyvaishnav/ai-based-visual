@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .users-wrapper {
+        background: #f7fafc;
+        border-radius: 20px;
+        padding: 1.5rem;
+    }
+    .card-custom {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    .card-header-custom {
+        background: transparent;
+        font-weight: 600;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #edf2f7;
+    }
+    .user-avatar-pill {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        display: inline-grid;
+        place-items: center;
+        font-weight: bold;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="users-wrapper">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-0"><i class="fas fa-users text-primary me-2"></i>User Accounts Management</h3>
+            <p class="text-muted small mb-0">Total of {{ users|length }} registered Digital Twin user accounts.</p>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary rounded-pill px-3">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card card-custom">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-list text-primary me-2"></i>All Accounts</span>
+            <span class="badge bg-light text-dark">{{ users|length }} records</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Occupation</th>
+                            <th>Income</th>
+                            <th>Savings</th>
+                            <th>Role</th>
+                            <th>Registered</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar-pill me-2">{{ u.username[0]|upper }}</div>
+                                    <div>
+                                        <strong class="d-block">{{ u.username }}</strong>
+                                        <small class="text-muted">ID: #{{ u.id }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ u.email }}</td>
+                            <td><span class="badge bg-light text-dark">{{ u.occupation }}</span></td>
+                            <td>₹{{ u.monthly_income|round(0)|int }}</td>
+                            <td class="fw-semibold">₹{{ u.savings|round(0)|int }}</td>
+                            <td>
+                                {% if u.is_admin %}
+                                <span class="badge bg-danger-subtle text-danger">Administrator</span>
+                                {% else %}
+                                <span class="badge bg-primary-subtle text-primary">User</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">{{ u.created_at.strftime('%d %b %Y') if u.created_at else '-' }}</td>
+                            <td class="text-center">
+                                <a href="{{ url_for('admin_user_detail', user_id=u.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                    <i class="fas fa-eye me-1"></i> View Twin
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
